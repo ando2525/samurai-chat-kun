@@ -1,0 +1,11 @@
+{
+  "name": "samurai-chat-kun",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/ando2525/samurai-chat-kun.git",
+  "author": "{ando} <{ando.pro.business@gmail.com}>",
+  "license": "MIT",
+  "devDependencies": {
+    "@line/bot-sdk": "^7.5.2"
+  }
+}
