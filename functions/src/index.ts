@@ -6,7 +6,7 @@ const https = require("https");
 
 const channelAccessToken =
   "7nEpdJkY/Ec2+QcJHyaR+vqUxf7chJmEF2OYYSbVh5wZvNvku6UgPIyIoEvy51KkCv0fLsl1Fogm0wrlwUWJrk1FrDWsCtoVM0jN6jxHab9mxGiD5nXf3zDTRlaoXlLOP9+UK1aHuuSGVevrJizYCQdB04t89/1O/w1cDnyilFU=";
-const chatGPTAPIKey = "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";
+const chatGPTAPIKey = "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";
 
 exports.helloWorld = functions.https.onRequest(async (req, res) => {
   if (req.method == "POST") {
@@ -58,10 +58,10 @@ const chatGPTResponse = async (message: string) => {
     { role: "user", content: message },
   ];
 
-  const body = JSON.stringify({
-    messages,
+  const body = {
     model: "gpt-3.5-turbo",
-  });
+    messages: messages,
+  };
   const res = await axios.post(url, body, {
     headers: {
       "Content-Type": "application/json",
