@@ -1,4 +1,5 @@
 import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
 // import { WebhookEvent } from "@line/bot-sdk";
 import { GPTMessage } from "./types/GPTMessage";
 import axios from "axios";
@@ -8,19 +9,30 @@ const channelAccessToken =
   "7nEpdJkY/Ec2+QcJHyaR+vqUxf7chJmEF2OYYSbVh5wZvNvku6UgPIyIoEvy51KkCv0fLsl1Fogm0wrlwUWJrk1FrDWsCtoVM0jN6jxHab9mxGiD5nXf3zDTRlaoXlLOP9+UK1aHuuSGVevrJizYCQdB04t89/1O/w1cDnyilFU=";
 const chatGPTAPIKey = "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";
 
-exports.helloWorld = functions.https.onRequest(async (req, res) => {
+export const helloWorld = functions.https.onRequest(async (req, res) => {
   if (req.method == "POST") {
     for (const event of req.body.events) {
       switch (event.type) {
         case "message":
           if (event.message.type === "text") {
             const gptResponse = await chatGPTResponse(event.meassage.text);
-            sendLineMessage(event.replyToken, gptResponse);
+            await saveToFirestore(event.message.text, gptResponse);
+            await sendLineMessage(event.replyToken, gptResponse);
           }
       }
     }
   }
 });
+
+const saveToFirestore = async (message: string, gptReponse: string) => {
+  const firestore = admin.firestore();
+  const docRef = firestore.collection("messages").doc();
+  await docRef.set({
+    userMessage: message,
+    gptReponse: gptReponse,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+};
 
 const sendLineMessage = (replyToken: string, message: string) => {
   const url = "https://api.line.me/v2/bot/message/reply";
