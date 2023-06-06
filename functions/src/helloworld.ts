@@ -18,6 +18,34 @@ export const helloWorld = functions.https.onRequest(async (req, res) => {
     const events: WebhookEvent[] = req.body.events;
     for (const event of events) {
       switch (event.type) {
+        case "follow":
+          await sendLineMessage(event.replyToken, [
+            {
+              type: "text",
+              text: "フォローありがとうございます。選択肢を選んでください。",
+              quickReply: {
+                items: [
+                  {
+                    type: "action",
+                    action: {
+                      type: "message",
+                      label: "Cを送信",
+                      text: "C",
+                    },
+                  },
+                  {
+                    type: "action",
+                    action: {
+                      type: "message",
+                      label: "Dを送信",
+                      text: "D",
+                    },
+                  },
+                ],
+              },
+            },
+          ]);
+          break;
         case "message":
           if (event.message.type === "text") {
             if (event.message.text === "画像") {
@@ -34,6 +62,41 @@ export const helloWorld = functions.https.onRequest(async (req, res) => {
                           type: "message",
                           label: "Yesを送信",
                           text: "Yes",
+                        },
+                      },
+                      {
+                        type: "action",
+                        action: {
+                          type: "message",
+                          label: "Noを送信",
+                          text: "No",
+                        },
+                      },
+                    ],
+                  },
+                },
+              ]);
+            } else if (event.message.text === "Yes") {
+              await sendLineMessage(event.replyToken, [
+                {
+                  type: "text",
+                  text: "さらに別の選択肢です。",
+                  quickReply: {
+                    items: [
+                      {
+                        type: "action",
+                        action: {
+                          type: "message",
+                          label: "Aを送信",
+                          text: "A",
+                        },
+                      },
+                      {
+                        type: "action",
+                        action: {
+                          type: "message",
+                          label: "Bを送信",
+                          text: "B",
                         },
                       },
                     ],
