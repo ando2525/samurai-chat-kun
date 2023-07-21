@@ -13,8 +13,8 @@ exports.helloWorld = functions.https.onRequest(async (req, res) => {
     for (const event of req.body.events) {
       switch (event.type) {
         case "message":
-          if (event.message.type === "text") {
-            const gptResponse = await chatGPTResponse(event.meassage.text);
+          if (event.message && event.message.type === "text") {
+            const gptResponse = await chatGPTResponse(event.message.text);
             sendLineMessage(event.replyToken, gptResponse);
           }
       }
