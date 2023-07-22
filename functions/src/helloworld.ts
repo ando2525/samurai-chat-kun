@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 // import { WebhookEvent } from "@line/bot-sdk";
 import { GPTMessage } from "./types/GPTMessage";
 import axios from "axios";
-const https = require("https");
+// const https = require("https");
 
 const channelAccessToken =
   "7nEpdJkY/Ec2+QcJHyaR+vqUxf7chJmEF2OYYSbVh5wZvNvku6UgPIyIoEvy51KkCv0fLsl1Fogm0wrlwUWJrk1FrDWsCtoVM0jN6jxHab9mxGiD5nXf3zDTRlaoXlLOP9+UK1aHuuSGVevrJizYCQdB04t89/1O/w1cDnyilFU=";
@@ -34,10 +34,34 @@ const saveToFirestore = async (message: string, gptReponse: string) => {
   });
 };
 
-const sendLineMessage = (replyToken: string, message: string) => {
+// const sendLineMessage = (replyToken: string, message: string) => {
+//   const url = "https://api.line.me/v2/bot/message/reply";
+//   const options = {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${channelAccessToken}`,
+//     },
+//   };
+
+//   const data = JSON.stringify({
+//     replyToken: replyToken,
+//     messages: [
+//       {
+//         type: "text",
+//         text: message,
+//       },
+//     ],
+//   });
+
+//   const line = https.request(url, options);
+//   line.write(data);
+//   line.end();
+// };
+
+const sendLineMessage = async (replyToken: string, message: string) => {
   const url = "https://api.line.me/v2/bot/message/reply";
-  const options = {
-    method: "POST",
+  const config = {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${channelAccessToken}`,
@@ -45,7 +69,7 @@ const sendLineMessage = (replyToken: string, message: string) => {
   };
 
   const data = JSON.stringify({
-    replyToken: replyToken,
+    replyToken,
     messages: [
       {
         type: "text",
@@ -54,31 +78,77 @@ const sendLineMessage = (replyToken: string, message: string) => {
     ],
   });
 
-  const line = https.request(url, options);
-  line.write(data);
-  line.end();
+  await axios.post(url, data, config);
 };
+
+// const chatGPTResponse = async (message: string) => {
+//   const url = "https://api.openai.com/v1/chat/completions";
+//   const messages: GPTMessage[] = [
+//     {
+//       role: "system",
+//       content:
+//         "あなたは5歳の幼児です。語尾を「でちゅ」にして、ユーザーの相談を解決してください",
+//     },
+//     { role: "user", content: message },
+//   ];
+
+//   const body = {
+//     model: "gpt-3.5-turbo",
+//     messages: messages,
+//   };
+//   const res = await axios.post(url, body, {
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${chatGPTAPIKey}`,
+//     },
+//   });
+//   return res.data.choices[0].message.content.trim();
+// };
 
 const chatGPTResponse = async (message: string) => {
   const url = "https://api.openai.com/v1/chat/completions";
-  const messages: GPTMessage[] = [
-    {
-      role: "system",
-      content:
-        "あなたは5歳の幼児です。語尾を「でちゅ」にして、ユーザーの相談を解決してください",
-    },
-    { role: "user", content: message },
-  ];
-
-  const body = {
-    model: "gpt-3.5-turbo",
-    messages: messages,
-  };
-  const res = await axios.post(url, body, {
+  const config = {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${chatGPTAPIKey}`,
     },
+  };
+
+  const firestore = admin.firestore();
+  const messagesRef = firestore.collection("messages");
+  const snapshot = await messagesRef.orderBy("createdAt").get();
+  const documents = snapshot.docs.map((doc) => doc.data());
+
+  let messages: GPTMessage[] = [
+    {
+      role: "system",
+      content:
+        "あなたは江戸時代の侍です。ユーザーの相談を侍らしく解決してください。",
+    },
+  ];
+
+  documents.forEach((document) => {
+    messages.push({
+      role: "user",
+      content: document.userMessage,
+    });
+    messages.push({
+      role: "system",
+      content: document.gptReponse,
+    });
   });
-  return res.data.choices[0].message.content.trim();
+
+  messages.push({
+    role: "user",
+    content: message,
+  });
+
+  const data = {
+    model: "gpt-3.5-turbo",
+    messages: messages,
+  };
+
+  const response = await axios.post(url, data, config);
+
+  return response.data.choices[0].message.content.trim();
 };
